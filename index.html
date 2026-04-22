@@ -38,6 +38,126 @@
 
   .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 20px; }
 
+  /* =================== PIN SCREEN =================== */
+  #pin-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh;
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 70% 10%, rgba(79,142,247,0.10) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(167,139,250,0.08) 0%, transparent 70%);
+    animation: fadeIn 0.4s ease;
+  }
+
+  #pin-screen.hide {
+    animation: fadeOut 0.35s ease forwards;
+    pointer-events: none;
+  }
+
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+  .pin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 40px 36px 36px;
+    width: 100%; max-width: 360px;
+    box-shadow: var(--glow), 0 8px 48px rgba(0,0,0,0.5);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+
+  .pin-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 28px 28px 0 0;
+  }
+
+  .pin-icon { font-size: 2.8rem; margin-bottom: 12px; }
+
+  .pin-title {
+    font-family: 'Kanit', sans-serif; font-size: 1.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 6px;
+  }
+
+  .pin-subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+
+  /* Dots */
+  .pin-dots {
+    display: flex; gap: 14px; margin-bottom: 28px;
+  }
+
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--muted);
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+
+  .pin-dot.filled {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    transform: scale(1.15);
+  }
+
+  .pin-dot.error {
+    border-color: var(--red);
+    background: rgba(248,113,113,0.3);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-5px); }
+    40%      { transform: translateX(5px); }
+    60%      { transform: translateX(-4px); }
+    80%      { transform: translateX(4px); }
+  }
+
+  /* Numpad */
+  .pin-pad {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; width: 100%;
+  }
+
+  .pin-btn {
+    padding: 16px; border-radius: 14px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    font-family: 'Kanit', sans-serif; font-size: 1.3rem; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    user-select: none;
+  }
+
+  .pin-btn:hover { background: rgba(79,142,247,0.12); border-color: rgba(79,142,247,0.3); }
+  .pin-btn:active { transform: scale(0.93); background: rgba(79,142,247,0.2); }
+
+  .pin-btn.del {
+    background: transparent; border-color: transparent;
+    color: var(--muted); font-size: 1rem;
+  }
+
+  .pin-btn.del:hover { color: var(--red); background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); }
+
+  .pin-btn.empty { background: transparent; border-color: transparent; cursor: default; }
+  .pin-btn.empty:hover { background: transparent; }
+
+  .pin-error-msg {
+    margin-top: 16px; font-size: 0.84rem; color: var(--red);
+    min-height: 20px; text-align: center;
+    opacity: 0; transition: opacity 0.2s;
+  }
+
+  .pin-error-msg.show { opacity: 1; }
+
+  /* =================== MAIN APP =================== */
+  #app { display: none; width: 100%; }
+  #app.show { display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.4s ease; }
+
   .tabs {
     display: flex; gap: 8px;
     background: var(--surface); border: 1px solid var(--border);
@@ -242,7 +362,6 @@
   .error { color: var(--red); font-size: 0.82rem; margin-top: 5px; display: none; }
   .save-msg { text-align: center; font-size: 0.84rem; margin-top: 8px; min-height: 18px; }
 
-  /* LOADING BAR */
   .loading-bar {
     display: none; align-items: center; justify-content: center; gap: 10px;
     padding: 12px 16px; border-radius: 10px;
@@ -340,14 +459,59 @@
 
   .btn-del:hover { background: rgba(248,113,113,0.18); }
   .btn-del:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Lock button */
+  .btn-lock {
+    padding: 8px 16px; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'Sarabun', sans-serif; font-size: 0.85rem;
+    cursor: pointer; transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-lock:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="tabs">
+<!-- =================== PIN SCREEN =================== -->
+<div id="pin-screen">
+  <div class="pin-card">
+    <div class="pin-icon">🔐</div>
+    <div class="pin-title">ใส่รหัส PIN</div>
+    <div class="pin-subtitle">กรอก PIN 4 หลักเพื่อเข้าใช้งาน</div>
+
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn empty" disabled></button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDelete()">⌫</button>
+    </div>
+
+    <div class="pin-error-msg" id="pin-error">❌ PIN ไม่ถูกต้อง กรุณาลองใหม่</div>
+  </div>
+</div>
+
+<!-- =================== MAIN APP =================== -->
+<div id="app">
+  <div class="tabs" style="position:relative">
     <button class="tab-btn active" onclick="showPage('calc')">🧮 คำนวณ</button>
     <button class="tab-btn" onclick="showPage('hist')" id="tab-hist">📋 ประวัติ</button>
+    <button class="btn-lock" onclick="lockApp()" style="margin-left:auto;flex:0">🔒</button>
   </div>
 
   <!-- PAGE: CALC -->
@@ -454,16 +618,85 @@
     </div>
     <div id="hist-content"></div>
   </div>
-
 </div>
 
 <script>
+  // =================== CONFIG ===================
+  const CORRECT_PIN = '1234'; // ← เปลี่ยน PIN ที่นี่
   const API_URL = 'https://script.google.com/macros/s/AKfycbwXhRFkZ88XGgtyogAnVQ9HhNvkkdU3MW2MSgrUTer8Ft9Ush-7BrAnIMY1IEE1cCaXag/exec';
 
+  // =================== PIN LOGIC ===================
+  let pinInput = '';
+
+  function pinPress(digit) {
+    if (pinInput.length >= 4) return;
+    pinInput += digit;
+    updateDots();
+    if (pinInput.length === 4) {
+      setTimeout(checkPin, 120);
+    }
+  }
+
+  function pinDelete() {
+    if (!pinInput.length) return;
+    pinInput = pinInput.slice(0, -1);
+    updateDots();
+  }
+
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.classList.toggle('filled', i < pinInput.length);
+      dot.classList.remove('error');
+    }
+  }
+
+  function checkPin() {
+    if (pinInput === CORRECT_PIN) {
+      document.getElementById('pin-screen').classList.add('hide');
+      setTimeout(() => {
+        document.getElementById('pin-screen').style.display = 'none';
+        document.getElementById('app').classList.add('show');
+      }, 350);
+    } else {
+      // Shake dots red
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('dot-' + i);
+        dot.classList.remove('filled');
+        dot.classList.add('error');
+      }
+      const errEl = document.getElementById('pin-error');
+      errEl.classList.add('show');
+      setTimeout(() => {
+        pinInput = '';
+        updateDots();
+        errEl.classList.remove('show');
+      }, 1000);
+    }
+  }
+
+  function lockApp() {
+    pinInput = '';
+    updateDots();
+    document.getElementById('pin-error').classList.remove('show');
+    document.getElementById('app').classList.remove('show');
+    const pinScreen = document.getElementById('pin-screen');
+    pinScreen.style.display = '';
+    pinScreen.classList.remove('hide');
+    document.getElementById('app').style.display = '';
+  }
+
+  // Keyboard support for PIN
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('pin-screen').style.display === 'none') return;
+    if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+    if (e.key === 'Backspace') pinDelete();
+  });
+
+  // =================== MAIN APP ===================
   const MONTHS = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-  // Init year dropdown
   (function() {
     const sel = document.getElementById('sel-year');
     const now = new Date();
@@ -486,7 +719,6 @@
     return Math.ceil(Number(n)).toLocaleString('th-TH') + ' บาท';
   }
 
-  // API helpers — Google Apps Script requires POST body as text/plain to avoid CORS preflight
   async function apiGet() {
     const res = await fetch(API_URL);
     return res.json();
@@ -694,15 +926,11 @@
     }).join('')}</div>`;
   }
 
-  function toggleItem(k) {
-    document.getElementById('hi-' + k).classList.toggle('open');
-  }
-
   document.getElementById('hist-content').addEventListener('click', function(e) {
     const delBtn = e.target.closest('[data-delete]');
     if (delBtn) { deleteRecord(delBtn.dataset.delete); return; }
     const head = e.target.closest('[data-toggle]');
-    if (head) { toggleItem(head.dataset.toggle); }
+    if (head) { document.getElementById('hi-' + head.dataset.toggle).classList.toggle('open'); }
   });
 
   async function deleteRecord(k) {
@@ -737,7 +965,6 @@
     }
   }
 
-  // Pre-load keys on startup
   (async function initKeys() {
     try {
       const saved = await apiGet();
