@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำนวณค่าใช้จ่ายบ้าน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Kanit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --text: #e8eaf6;
+    --muted: #7b8299;
+    --border: rgba(255,255,255,0.07);
+    --glow: 0 0 32px rgba(79,142,247,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px 48px;
+    background-image:
+      radial-gradient(ellipse 60% 50% at 70% 10%, rgba(79,142,247,0.10) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(167,139,250,0.08) 0%, transparent 70%);
+  }
+
+  .wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 20px; }
+
+  .tabs {
+    display: flex; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 6px;
+  }
+
+  .tab-btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: none;
+    background: transparent; color: var(--muted);
+    font-family: 'Kanit', sans-serif; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, color 0.2s;
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 24px; padding: 36px 32px 32px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--glow), 0 8px 48px rgba(0,0,0,0.45);
+  }
+
+  .card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 24px 24px 0 0;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .header { text-align: center; margin-bottom: 28px; }
+
+  .header h1 {
+    font-family: 'Kanit', sans-serif; font-size: 1.6rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .header p { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+
+  .month-row { display: flex; gap: 10px; margin-bottom: 24px; }
+
+  .month-row select {
+    flex: 1; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'Sarabun', sans-serif;
+    font-size: 0.95rem; font-weight: 600; padding: 10px 12px;
+    outline: none; cursor: pointer; transition: border-color 0.2s;
+  }
+
+  .month-row select:focus { border-color: var(--accent); }
+  .month-row select option { background: #1a1d27; }
+
+  .fields { display: flex; flex-direction: column; gap: 18px; margin-bottom: 24px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field-row { display: flex; gap: 8px; align-items: center; }
+
+  .bill-month-sel {
+    flex: 0 0 80px; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'Sarabun', sans-serif;
+    font-size: 0.85rem; font-weight: 600; padding: 12px 6px;
+    outline: none; cursor: pointer; transition: border-color 0.2s; text-align: center;
+  }
+
+  .bill-month-sel:focus { border-color: var(--accent); }
+  .bill-month-sel option { background: #1a1d27; }
+
+  .field label {
+    font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 8px; font-weight: 600;
+  }
+
+  .field label .icon {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+  }
+
+  .icon-electric { background: rgba(251,191,36,0.15); }
+  .icon-water    { background: rgba(79,142,247,0.15); }
+  .icon-net      { background: rgba(167,139,250,0.15); }
+
+  .input-wrap { position: relative; }
+
+  .input-wrap input {
+    width: 100%; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    color: var(--text); font-family: 'Sarabun', sans-serif;
+    font-size: 1.05rem; font-weight: 600;
+    padding: 12px 52px 12px 14px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s; -moz-appearance: textfield;
+  }
+
+  .input-wrap input::-webkit-outer-spin-button,
+  .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .input-wrap input:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.15);
+  }
+
+  .input-wrap input::placeholder { color: var(--muted); font-weight: 400; }
+
+  .unit {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 0.8rem; pointer-events: none;
+  }
+
+  .btn {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; font-family: 'Kanit', sans-serif;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    box-shadow: 0 4px 20px rgba(79,142,247,0.3);
+  }
+
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,142,247,0.4); }
+  .btn:active { transform: translateY(0); filter: brightness(0.92); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-outline {
+    width: 100%; margin-top: 9px; padding: 10px; border-radius: 12px;
+    border: 1.5px solid var(--border); background: transparent; color: var(--muted);
+    font-family: 'Sarabun', sans-serif; font-size: 0.88rem; cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+  .result {
+    margin-top: 24px; border-radius: 16px;
+    background: var(--surface2); border: 1px solid var(--border);
+    overflow: hidden; display: none;
+    animation: slideUp 0.32s cubic-bezier(0.22,1,0.36,1);
+  }
+
+  .result.show { display: block; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    padding: 12px 18px; background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Kanit', sans-serif; font-size: 0.82rem; color: var(--muted);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .result-rows { padding: 14px 18px; display: flex; flex-direction: column; gap: 9px; }
+
+  .result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.93rem; color: var(--muted);
+  }
+
+  .result-row .val { color: var(--text); font-weight: 600; }
+
+  .result-total {
+    padding: 14px 18px 18px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 5px;
+  }
+
+  .total-label { font-size: 0.82rem; color: var(--muted); }
+
+  .total-sum {
+    font-family: 'Kanit', sans-serif; font-size: 1.85rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--green), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .per-person {
+    margin-top: 8px; padding: 11px 15px; border-radius: 10px;
+    background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.18);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .per-person span:first-child { font-size: 0.88rem; color: var(--green); }
+
+  .per-person .pp-val {
+    font-family: 'Kanit', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--green);
+  }
+
+  .save-btn-wrap { margin-top: 12px; }
+
+  .btn-save {
+    width: 100%; padding: 11px; border-radius: 12px;
+    background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.3);
+    color: var(--green); font-family: 'Kanit', sans-serif;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .btn-save:hover { background: rgba(52,211,153,0.25); transform: translateY(-1px); }
+  .btn-save:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .error { color: var(--red); font-size: 0.82rem; margin-top: 5px; display: none; }
+  .save-msg { text-align: center; font-size: 0.84rem; margin-top: 8px; min-height: 18px; }
+
+  /* LOADING BAR */
+  .loading-bar {
+    display: none; align-items: center; justify-content: center; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.2);
+    color: var(--accent); font-size: 0.88rem; margin-top: 10px;
+  }
+
+  .loading-bar.show { display: flex; }
+
+  .spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(79,142,247,0.3); border-top-color: var(--accent);
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* HISTORY */
+  .hist-top {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+  }
+
+  .hist-top h2 {
+    font-family: 'Kanit', sans-serif; font-size: 1.2rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .btn-clear-all {
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid rgba(248,113,113,0.3);
+    background: rgba(248,113,113,0.08); color: var(--red);
+    font-family: 'Sarabun', sans-serif; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-clear-all:hover { background: rgba(248,113,113,0.18); }
+
+  .hist-empty {
+    text-align: center; color: var(--muted); padding: 48px 20px; font-size: 0.95rem;
+    border: 1.5px dashed var(--border); border-radius: 16px;
+  }
+
+  .hist-empty .big { font-size: 2.5rem; margin-bottom: 10px; }
+
+  .hist-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .hist-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; transition: border-color 0.2s;
+  }
+
+  .hist-item:hover { border-color: rgba(79,142,247,0.3); }
+
+  .hist-item-head {
+    padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; user-select: none;
+  }
+
+  .hist-month {
+    font-family: 'Kanit', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text);
+  }
+
+  .hist-head-right { display: flex; align-items: center; gap: 10px; }
+
+  .hist-total-badge {
+    font-family: 'Kanit', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--accent);
+  }
+
+  .hist-chevron { color: var(--muted); font-size: 0.75rem; transition: transform 0.2s; }
+  .hist-item.open .hist-chevron { transform: rotate(180deg); }
+  .hist-body { display: none; border-top: 1px solid var(--border); padding: 14px 16px; }
+  .hist-item.open .hist-body { display: block; }
+
+  .hist-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .hist-row { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--muted); }
+  .hist-row .v { color: var(--text); font-weight: 600; }
+
+  .hist-pp {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; border-radius: 8px;
+    background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.15);
+    margin-bottom: 10px;
+  }
+
+  .hist-pp span:first-child { font-size: 0.82rem; color: var(--green); }
+  .hist-pp .ppv { font-family: 'Kanit', sans-serif; font-size: 1rem; font-weight: 700; color: var(--green); }
+
+  .btn-del {
+    width: 100%; padding: 8px; border-radius: 8px;
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2);
+    color: var(--red); font-family: 'Sarabun', sans-serif; font-size: 0.82rem;
+    cursor: pointer; transition: background 0.2s;
+  }
+
+  .btn-del:hover { background: rgba(248,113,113,0.18); }
+  .btn-del:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showPage('calc')">🧮 คำนวณ</button>
+    <button class="tab-btn" onclick="showPage('hist')" id="tab-hist">📋 ประวัติ</button>
+  </div>
+
+  <!-- PAGE: CALC -->
+  <div class="card page active" id="page-calc">
+    <div class="header">
+      <h1>🏠 ค่าใช้จ่ายบ้าน</h1>
+      <p>ข้อมูลบันทึกไว้ใน Google Sheets เข้าได้ทุกเครื่อง</p>
+    </div>
+
+    <div class="month-row">
+      <select id="sel-month">
+        <option value="1">มกราคม</option><option value="2">กุมภาพันธ์</option>
+        <option value="3">มีนาคม</option><option value="4">เมษายน</option>
+        <option value="5">พฤษภาคม</option><option value="6">มิถุนายน</option>
+        <option value="7">กรกฎาคม</option><option value="8">สิงหาคม</option>
+        <option value="9">กันยายน</option><option value="10">ตุลาคม</option>
+        <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
+      </select>
+      <select id="sel-year"></select>
+    </div>
+
+    <div class="fields">
+      <div class="field">
+        <label><span class="icon icon-electric">⚡</span>ค่าไฟฟ้า</label>
+        <div class="field-row">
+          <div class="input-wrap" style="flex:1">
+            <input type="number" id="electric" placeholder="0.00" min="0" step="0.01">
+            <span class="unit">บาท</span>
+          </div>
+          <select id="electric-month" class="bill-month-sel">
+            <option value="">เดือนที่ใช้</option>
+            <option value="1">ม.ค.</option><option value="2">ก.พ.</option>
+            <option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+            <option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
+            <option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+            <option value="9">ก.ย.</option><option value="10">ต.ค.</option>
+            <option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label><span class="icon icon-water">💧</span>ค่าน้ำประปา</label>
+        <div class="field-row">
+          <div class="input-wrap" style="flex:1">
+            <input type="number" id="water" placeholder="0.00" min="0" step="0.01">
+            <span class="unit">บาท</span>
+          </div>
+          <select id="water-month" class="bill-month-sel">
+            <option value="">เดือนที่ใช้</option>
+            <option value="1">ม.ค.</option><option value="2">ก.พ.</option>
+            <option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+            <option value="5">พ.ค.</option><option value="6">มิ.ย.</option>
+            <option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+            <option value="9">ก.ย.</option><option value="10">ต.ค.</option>
+            <option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label><span class="icon icon-net">📡</span>ค่าอินเทอร์เน็ตบ้าน</label>
+        <div class="input-wrap">
+          <input type="number" id="net" placeholder="0.00" min="0" step="0.01">
+          <span class="unit">บาท</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="error" id="error">⚠️ กรุณากรอกค่าใช้จ่ายอย่างน้อย 1 รายการ</div>
+
+    <button class="btn" onclick="calculate()">คำนวณ</button>
+    <button class="btn-outline" onclick="resetForm()">รีเซ็ต / เริ่มใหม่</button>
+
+    <div class="result" id="result">
+      <div class="result-header">สรุปค่าใช้จ่าย</div>
+      <div class="result-rows" id="result-rows"></div>
+      <div class="result-total">
+        <div class="total-label">ยอดรวมทั้งหมด</div>
+        <div class="total-sum" id="total-sum"></div>
+        <div class="per-person">
+          <span>👥 แบ่งจ่ายคนละ</span>
+          <span class="pp-val" id="per-person"></span>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-save" id="btn-save" onclick="saveRecord()">💾 บันทึกเดือนนี้</button>
+        </div>
+        <div class="save-msg" id="save-msg"></div>
+        <div class="loading-bar" id="loading-save">
+          <div class="spinner"></div>
+          <span>กำลังบันทึกไปยัง Google Sheets...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: HISTORY -->
+  <div class="card page" id="page-hist">
+    <div class="hist-top">
+      <h2>📋 ประวัติรายเดือน</h2>
+      <button class="btn-clear-all" id="btn-clear-all" onclick="clearAll()" style="display:none">ลบทั้งหมด</button>
+    </div>
+    <div class="loading-bar show" id="loading-hist">
+      <div class="spinner"></div>
+      <span>กำลังโหลดข้อมูลจาก Google Sheets...</span>
+    </div>
+    <div id="hist-content"></div>
+  </div>
+
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwXhRFkZ88XGgtyogAnVQ9HhNvkkdU3MW2MSgrUTer8Ft9Ush-7BrAnIMY1IEE1cCaXag/exec';
+
+  const MONTHS = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  // Init year dropdown
+  (function() {
+    const sel = document.getElementById('sel-year');
+    const now = new Date();
+    const y = now.getFullYear();
+    for (let i = y; i >= y - 5; i--) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = (i + 543) + ' (พ.ศ.)';
+      sel.appendChild(opt);
+    }
+    document.getElementById('sel-month').value = now.getMonth() + 1;
+    sel.value = y;
+  })();
+
+  function fmt(n) {
+    return Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+  }
+
+  function fmtInt(n) {
+    return Math.ceil(Number(n)).toLocaleString('th-TH') + ' บาท';
+  }
+
+  // API helpers — Google Apps Script requires POST body as text/plain to avoid CORS preflight
+  async function apiGet() {
+    const res = await fetch(API_URL);
+    return res.json();
+  }
+
+  async function apiPost(data) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    return res.json();
+  }
+
+  let lastResult = null;
+  let savedKeys = new Set();
+
+  function getKey() {
+    const m = document.getElementById('sel-month').value.padStart(2,'0');
+    const y = document.getElementById('sel-year').value;
+    return y + '-' + m;
+  }
+
+  function showPage(p) {
+    document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+    document.querySelectorAll('.tab-btn')[p === 'calc' ? 0 : 1].classList.add('active');
+    if (p === 'hist') renderHistory();
+  }
+
+  function calculate() {
+    const electric = parseFloat(document.getElementById('electric').value) || 0;
+    const water    = parseFloat(document.getElementById('water').value)    || 0;
+    const net      = parseFloat(document.getElementById('net').value)      || 0;
+    const electricMonth = document.getElementById('electric-month').value;
+    const waterMonth    = document.getElementById('water-month').value;
+    const errEl = document.getElementById('error');
+
+    if (!electric && !water && !net) {
+      errEl.style.display = 'block';
+      document.getElementById('result').classList.remove('show');
+      lastResult = null; return;
+    }
+    errEl.style.display = 'none';
+
+    const total = electric + water + net;
+    const perPerson = total / 2;
+    lastResult = { electric, water, net, total, perPerson, electricMonth, waterMonth };
+
+    const rows = [];
+    if (electric) {
+      const mLabel = electricMonth ? ` <span style="color:var(--accent);font-size:0.8rem">(${MONTHS[electricMonth]})</span>` : '';
+      rows.push({ label: `⚡ ค่าไฟฟ้า${mLabel}`, val: electric });
+    }
+    if (water) {
+      const mLabel = waterMonth ? ` <span style="color:var(--accent);font-size:0.8rem">(${MONTHS[waterMonth]})</span>` : '';
+      rows.push({ label: `💧 ค่าน้ำประปา${mLabel}`, val: water });
+    }
+    if (net) rows.push({ label: '📡 ค่าเน็ตบ้าน', val: net });
+
+    document.getElementById('result-rows').innerHTML = rows.map(r =>
+      `<div class="result-row"><span>${r.label}</span><span class="val">${fmt(r.val)}</span></div>`
+    ).join('');
+
+    document.getElementById('total-sum').textContent = fmt(total);
+    document.getElementById('per-person').textContent = fmtInt(perPerson);
+
+    const btnSave = document.getElementById('btn-save');
+    const saveMsg = document.getElementById('save-msg');
+    if (savedKeys.has(getKey())) {
+      btnSave.disabled = true;
+      btnSave.textContent = '✅ บันทึกแล้ว';
+      saveMsg.style.color = 'var(--muted)';
+      saveMsg.textContent = 'มีข้อมูลเดือนนี้แล้ว — ลบในประวัติก่อนเพื่อบันทึกใหม่';
+    } else {
+      btnSave.disabled = false;
+      btnSave.textContent = '💾 บันทึกเดือนนี้';
+      saveMsg.textContent = '';
+    }
+
+    const resultEl = document.getElementById('result');
+    resultEl.classList.remove('show');
+    void resultEl.offsetWidth;
+    resultEl.classList.add('show');
+  }
+
+  async function saveRecord() {
+    if (!lastResult) return;
+    const key = getKey();
+    const m = parseInt(document.getElementById('sel-month').value);
+    const y = parseInt(document.getElementById('sel-year').value);
+
+    const btnSave = document.getElementById('btn-save');
+    const saveMsg = document.getElementById('save-msg');
+    const loadingEl = document.getElementById('loading-save');
+
+    btnSave.disabled = true;
+    btnSave.textContent = '⏳ กำลังบันทึก...';
+    saveMsg.textContent = '';
+    loadingEl.classList.add('show');
+
+    try {
+      await apiPost({ action: 'save', key, month: m, year: y, ...lastResult });
+      savedKeys.add(key);
+      btnSave.textContent = '✅ บันทึกแล้ว';
+      saveMsg.style.color = 'var(--green)';
+      saveMsg.textContent = '✅ บันทึกเรียบร้อย! ดูได้ที่แท็บ "ประวัติ"';
+      updateHistBadge();
+    } catch (err) {
+      btnSave.disabled = false;
+      btnSave.textContent = '💾 บันทึกเดือนนี้';
+      saveMsg.style.color = 'var(--red)';
+      saveMsg.textContent = '❌ บันทึกไม่สำเร็จ กรุณาลองใหม่';
+    } finally {
+      loadingEl.classList.remove('show');
+    }
+  }
+
+  function updateHistBadge() {
+    const n = savedKeys.size;
+    document.getElementById('tab-hist').textContent = n > 0 ? `📋 ประวัติ (${n})` : '📋 ประวัติ';
+  }
+
+  function resetForm() {
+    ['electric','water','net'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('electric-month').value = '';
+    document.getElementById('water-month').value = '';
+    document.getElementById('result').classList.remove('show');
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('save-msg').textContent = '';
+    lastResult = null;
+  }
+
+  async function renderHistory() {
+    const cont = document.getElementById('hist-content');
+    const loadingEl = document.getElementById('loading-hist');
+    const clearBtn = document.getElementById('btn-clear-all');
+
+    cont.innerHTML = '';
+    loadingEl.classList.add('show');
+    clearBtn.style.display = 'none';
+
+    let saved = {};
+    try {
+      saved = await apiGet();
+    } catch (err) {
+      loadingEl.classList.remove('show');
+      cont.innerHTML = `<div class="hist-empty"><div class="big">⚠️</div>โหลดข้อมูลไม่สำเร็จ<br><span style="font-size:0.82rem;margin-top:6px;display:block">กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</span></div>`;
+      return;
+    }
+
+    loadingEl.classList.remove('show');
+    savedKeys = new Set(Object.keys(saved));
+    updateHistBadge();
+
+    const keys = Object.keys(saved).sort((a,b) => b.localeCompare(a));
+
+    if (!keys.length) {
+      cont.innerHTML = `
+        <div class="hist-empty">
+          <div class="big">📭</div>
+          ยังไม่มีประวัติที่บันทึกไว้<br>
+          <span style="font-size:0.82rem;margin-top:6px;display:block">คำนวณแล้วกด "บันทึกเดือนนี้" เพื่อเก็บข้อมูล</span>
+        </div>`;
+      return;
+    }
+
+    clearBtn.style.display = '';
+
+    cont.innerHTML = `<div class="hist-list">${keys.map(k => {
+      const d = saved[k];
+      const label = `${MONTHS[d.month]} ${Number(d.year) + 543}`;
+      const rows = [];
+      if (Number(d.electric)) {
+        const mLabel = d.electricMonth ? ` <span style="color:var(--accent);font-size:0.78rem">(${MONTHS[d.electricMonth]})</span>` : '';
+        rows.push({ label: `⚡ ค่าไฟฟ้า${mLabel}`, val: d.electric });
+      }
+      if (Number(d.water)) {
+        const mLabel = d.waterMonth ? ` <span style="color:var(--accent);font-size:0.78rem">(${MONTHS[d.waterMonth]})</span>` : '';
+        rows.push({ label: `💧 ค่าน้ำ${mLabel}`, val: d.water });
+      }
+      if (Number(d.net)) rows.push({ label: '📡 ค่าเน็ต', val: d.net });
+
+      return `
+      <div class="hist-item" id="hi-${k}">
+        <div class="hist-item-head" data-toggle="${k}">
+          <span class="hist-month">${label}</span>
+          <div class="hist-head-right">
+            <span class="hist-total-badge">${fmt(d.total)}</span>
+            <span class="hist-chevron">▼</span>
+          </div>
+        </div>
+        <div class="hist-body">
+          <div class="hist-rows">
+            ${rows.map(r => `<div class="hist-row"><span>${r.label}</span><span class="v">${fmt(r.val)}</span></div>`).join('')}
+          </div>
+          <div class="hist-pp">
+            <span>👥 คนละ</span>
+            <span class="ppv">${fmtInt(d.perPerson)}</span>
+          </div>
+          <button class="btn-del" data-delete="${k}">🗑 ลบรายการนี้</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function toggleItem(k) {
+    document.getElementById('hi-' + k).classList.toggle('open');
+  }
+
+  document.getElementById('hist-content').addEventListener('click', function(e) {
+    const delBtn = e.target.closest('[data-delete]');
+    if (delBtn) { deleteRecord(delBtn.dataset.delete); return; }
+    const head = e.target.closest('[data-toggle]');
+    if (head) { toggleItem(head.dataset.toggle); }
+  });
+
+  async function deleteRecord(k) {
+    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
+    const btn = document.querySelector(`[data-delete="${k}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังลบ...'; }
+    try {
+      await apiPost({ action: 'delete', key: k });
+      savedKeys.delete(k);
+      updateHistBadge();
+      renderHistory();
+    } catch (err) {
+      alert('ลบไม่สำเร็จ กรุณาลองใหม่');
+      if (btn) { btn.disabled = false; btn.textContent = '🗑 ลบรายการนี้'; }
+    }
+  }
+
+  async function clearAll() {
+    if (!confirm('ต้องการลบประวัติทั้งหมดใช่ไหม?')) return;
+    const clearBtn = document.getElementById('btn-clear-all');
+    clearBtn.textContent = '⏳ กำลังลบ...';
+    clearBtn.disabled = true;
+    try {
+      await apiPost({ action: 'deleteAll' });
+      savedKeys.clear();
+      updateHistBadge();
+      renderHistory();
+    } catch (err) {
+      alert('ลบไม่สำเร็จ กรุณาลองใหม่');
+      clearBtn.textContent = 'ลบทั้งหมด';
+      clearBtn.disabled = false;
+    }
+  }
+
+  // Pre-load keys on startup
+  (async function initKeys() {
+    try {
+      const saved = await apiGet();
+      savedKeys = new Set(Object.keys(saved));
+      updateHistBadge();
+    } catch(_) {}
+  })();
+
+  document.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+  });
+
+  ['sel-month','sel-year'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if (lastResult) calculate();
+    });
+  });
+</script>
+</body>
+</html>
